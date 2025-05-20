@@ -1,3 +1,4 @@
+import { supabase } from "~/supabase-client";
 import { useToDoContext } from "~/toDoContext";
 
 export default function Completed() {
@@ -23,9 +24,18 @@ export default function Completed() {
               <input
                 type="checkbox"
                 checked={task.completed}
-                onChange={() =>
-                  dispatch({ type: "TOGGLE_TODO", payload: task.id })
-                }
+                onChange={async () => {
+                  dispatch({ type: "TOGGLE_TODO", payload: task.id });
+
+                  const { error } = await supabase
+                    .from("todo")
+                    .update({ completed: !task.completed })
+                    .eq("id", task.id);
+
+                  if (error) {
+                    console.error("Toggling task error: ", error);
+                  }
+                }}
                 className="w-5 h-5 accent-green-600"
               />
               <span
@@ -41,9 +51,16 @@ export default function Completed() {
 
             <div className="flex gap-2">
               <button
-                onClick={() =>
-                  dispatch({ type: "DELETE_TODO", payload: task.id })
-                }
+                onClick={async () => {
+                  dispatch({ type: "DELETE_TODO", payload: task.id });
+                  const { error } = await supabase
+                    .from("todo")
+                    .delete()
+                    .eq("id", task.id);
+                  if (error) {
+                    console.error("Deleting task error: ", error);
+                  }
+                }}
                 className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
               >
                 Delete

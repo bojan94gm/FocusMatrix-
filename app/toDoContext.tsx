@@ -1,4 +1,5 @@
 import React, { useReducer, createContext, useEffect, useContext } from "react";
+import { supabase } from "./supabase-client";
 
 export type Todo = {
   id: number;
@@ -9,6 +10,7 @@ export type Todo = {
 type State = Todo[];
 
 type Action =
+  | { type: "SET_TODO"; payload: Todo[] }
   | { type: "ADD_TODO"; payload: Todo }
   | { type: "TOGGLE_TODO"; payload: number }
   | { type: "DELETE_TODO"; payload: number }
@@ -19,17 +21,10 @@ type ContextType = {
   dispatch: React.Dispatch<Action>;
 };
 
-const initialTodo: Todo[] = (() => {
-  try {
-    const stored = JSON.parse(localStorage.getItem("zadaci") || "[]");
-    return Array.isArray(stored) ? stored : [];
-  } catch (error) {
-    return [];
-  }
-})();
-
 function reducerFunction(todo: State, action: Action) {
   switch (action.type) {
+    case "SET_TODO":
+      return [...todo, ...action.payload];
     case "ADD_TODO":
       return [...todo, action.payload];
     case "DELETE_TODO":
@@ -54,11 +49,24 @@ function reducerFunction(todo: State, action: Action) {
 const toDoContext = createContext<ContextType | undefined>(undefined);
 
 export function ToDoProvider({ children }: { children: React.ReactNode }) {
-  const [todo, dispatch] = useReducer(reducerFunction, initialTodo);
+  const [todo, dispatch] = useReducer(reducerFunction, []);
 
   useEffect(() => {
-    localStorage.setItem("zadaci", JSON.stringify(todo));
-  }, [todo]);
+    async function fetchData() {
+      const { error, data } = await supabase
+        .from("todo")
+        .select("id,text,completed")
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Toggling task error: ", error);
+      }
+
+      dispatch({ type: "SET_TODO", payload: data as Todo[] });
+    }
+
+    fetchData();
+  }, []);
 
   return (
     <toDoContext.Provider value={{ todo, dispatch }}>

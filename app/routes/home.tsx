@@ -1,3 +1,4 @@
+import { supabase } from "~/supabase-client";
 import type { Route } from "./+types/home";
 import { useToDoContext } from "~/toDoContext";
 import { type Todo } from "~/toDoContext";
@@ -15,22 +16,45 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const { todo, dispatch } = useToDoContext();
 
-  function addTask() {
+  async function addTask() {
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
     dispatch({
       type: "ADD_TODO",
       payload: { id: Date.now(), text: textInput.value, completed: false },
     });
 
+    const { error } = await supabase
+      .from("todo")
+      .insert({ text: textInput.value, completed: false })
+      .single();
+
+    if (error) {
+      console.error("Insert task error: ", error);
+    }
+
     textInput.value = "";
   }
 
-  function deleteTask(id: number) {
+  async function deleteTask(id: number) {
     dispatch({ type: "DELETE_TODO", payload: id });
+    const { error } = await supabase.from("todo").delete().eq("id", id);
+
+    if (error) {
+      console.error("Deleting task error: ", error);
+    }
   }
 
-  function toggleTodo(task: Todo) {
+  async function toggleTodo(task: Todo) {
     dispatch({ type: "TOGGLE_TODO", payload: task.id });
+
+    const { error } = await supabase
+      .from("todo")
+      .update({ completed: !task.completed })
+      .eq("id", task.id);
+
+    if (error) {
+      console.error("Toggling task error: ", error);
+    }
   }
 
   function editTask(task: Todo) {
@@ -40,10 +64,20 @@ export default function Home() {
 
     if (!textInput.value.trim()) return;
 
-    function saveTask() {
+    async function saveTask() {
       const editedTask = textInput.value;
 
       dispatch({ type: "EDIT_TODO", payload: { ...task, text: editedTask } });
+
+      const { error } = await supabase
+        .from("todo")
+        .update({ text: editedTask })
+        .eq("id", task.id);
+
+      if (error) {
+        console.error("Editing task error: ", error);
+      }
+
       textInput.value = "";
     }
 
