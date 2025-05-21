@@ -2,6 +2,7 @@ import { supabase } from "~/supabase-client";
 import type { Route } from "./+types/home";
 import { useToDoContext } from "~/toDoContext";
 import { type Todo } from "~/toDoContext";
+import { useState } from "react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -15,24 +16,41 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   const { todo, dispatch } = useToDoContext();
+  const [urgency, setUrgency] = useState(3);
+  const [importance, setImportance] = useState(3);
 
   async function addTask() {
-    const tempId = Date.now();
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
-    dispatch({
-      type: "ADD_TODO",
-      payload: { id: tempId, text: textInput.value, completed: false },
-    });
 
-    const { error } = await supabase
+    const determineQuadrant = (): number => {
+      if (urgency >= 4 && importance >= 4) return 1;
+      if (importance >= 4 && urgency < 4) return 2;
+      if (urgency >= 4 && importance < 4) return 3;
+      return 4;
+    };
+
+    const quadrant = determineQuadrant();
+
+    const { error, data } = await supabase
       .from("todo")
-      .insert({ text: textInput.value, completed: false })
+      .insert({
+        text: textInput.value,
+        completed: false,
+        urgency: urgency,
+        importance: importance,
+        quadrant: quadrant,
+      })
       .select()
       .single();
 
     if (error) {
       console.error("Insert task error: ", error);
-      dispatch({ type: "DELETE_TODO", payload: tempId });
+      return;
+    } else {
+      dispatch({
+        type: "ADD_TODO",
+        payload: data,
+      });
     }
     textInput.value = "";
   }
@@ -101,6 +119,28 @@ export default function Home() {
           placeholder="Write task..."
           className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <label htmlFor="urgency">Task Urgency</label>
+        <input
+          type="range"
+          name=""
+          value={urgency}
+          min={1}
+          max={5}
+          id="urgency "
+          onChange={(e) => setUrgency(parseInt(e.target.value))}
+        />
+
+        <label htmlFor="importance">Task Importance</label>
+        <input
+          type="range"
+          min={1}
+          max={5}
+          value={importance}
+          name=""
+          id="importance"
+          onChange={(e) => setImportance(parseInt(e.target.value))}
+        />
+
         <button
           onClick={addTask}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"

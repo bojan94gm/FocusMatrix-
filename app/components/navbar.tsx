@@ -34,8 +34,19 @@ export default function Navbar() {
               }`
             }
           >
-            Home
+            Tasks
           </NavLink>
+          <NavLink
+            to="/matrix"
+            className={({ isActive }) =>
+              `hover:text-blue-200 transition ${
+                isActive ? "underline underline-offset-4 text-white" : ""
+              }`
+            }
+          >
+            Priority Matrix
+          </NavLink>
+
           <NavLink
             to="/completed"
             className={({ isActive }) =>

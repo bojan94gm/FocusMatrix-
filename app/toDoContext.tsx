@@ -5,6 +5,9 @@ export type Todo = {
   id: number;
   text: string;
   completed: boolean;
+  urgency: number;
+  importance: number;
+  quadrant: number;
 };
 
 type State = Todo[];
@@ -55,7 +58,7 @@ export function ToDoProvider({ children }: { children: React.ReactNode }) {
     async function fetchData() {
       const { error, data } = await supabase
         .from("todo")
-        .select("id,text,completed")
+        .select("id,text,completed,urgency,importance")
         .order("created_at", { ascending: true });
 
       if (error) {
