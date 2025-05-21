@@ -24,7 +24,7 @@ type ContextType = {
 function reducerFunction(todo: State, action: Action) {
   switch (action.type) {
     case "SET_TODO":
-      return [...todo, ...action.payload];
+      return action.payload;
     case "ADD_TODO":
       return [...todo, action.payload];
     case "DELETE_TODO":

@@ -11,6 +11,10 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import Navbar from "./components/navbar";
 import { ToDoProvider } from "./toDoContext";
+import Auth from "./components/auth";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabase-client";
+import type { Session } from "@supabase/supabase-js";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -44,12 +48,47 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    async function getSession() {
+      const { error, data } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Getting session error: ", error);
+      } else {
+        setSession(data.session);
+      }
+    }
+    getSession();
+    console.log(session);
+  }, []);
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      console.log(_event);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <>
-      <ToDoProvider>
-        <Navbar></Navbar>
-        <Outlet></Outlet>
-      </ToDoProvider>
+      {!session ? (
+        <Auth></Auth>
+      ) : (
+        <>
+          <ToDoProvider>
+            <Navbar></Navbar>
+            <Outlet></Outlet>
+          </ToDoProvider>
+        </>
+      )}
     </>
   );
 }

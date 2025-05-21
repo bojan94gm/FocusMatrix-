@@ -17,21 +17,23 @@ export default function Home() {
   const { todo, dispatch } = useToDoContext();
 
   async function addTask() {
+    const tempId = Date.now();
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
     dispatch({
       type: "ADD_TODO",
-      payload: { id: Date.now(), text: textInput.value, completed: false },
+      payload: { id: tempId, text: textInput.value, completed: false },
     });
 
     const { error } = await supabase
       .from("todo")
       .insert({ text: textInput.value, completed: false })
+      .select()
       .single();
 
     if (error) {
       console.error("Insert task error: ", error);
+      dispatch({ type: "DELETE_TODO", payload: tempId });
     }
-
     textInput.value = "";
   }
 

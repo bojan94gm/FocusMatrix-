@@ -1,6 +1,20 @@
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
+import { supabase } from "~/supabase-client";
 
 export default function Navbar() {
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Signing out error: ", error);
+      return;
+    }
+
+    navigate("/");
+  }
+
   return (
     <div className="bg-blue-600 text-white shadow-md">
       <div className="max-w-xl mx-auto px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -42,6 +56,9 @@ export default function Navbar() {
           >
             About
           </NavLink>
+          <button onClick={handleSignOut} className="hover:text-blue-200">
+            Sign Out
+          </button>
         </nav>
       </div>
     </div>
