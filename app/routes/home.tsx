@@ -31,6 +31,11 @@ export default function Home() {
 
     const quadrant = determineQuadrant();
 
+    if (textInput.value === "") {
+      alert("Add task text");
+      return;
+    }
+
     const { error, data } = await supabase
       .from("todo")
       .insert({
@@ -79,31 +84,59 @@ export default function Home() {
 
   function editTask(task: Todo) {
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
-    textInput.focus();
+    const urgencyInput = document.getElementById("urgency") as HTMLInputElement;
+    const importanceInput = document.getElementById(
+      "importance"
+    ) as HTMLInputElement;
+
     textInput.value = task.text;
+    urgencyInput.value = String(task.urgency);
+    importanceInput.value = String(task.importance);
 
-    if (!textInput.value.trim()) return;
+    textInput.focus();
 
-    async function saveTask() {
-      const editedTask = textInput.value;
+    const saveEdit = async (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      textInput.removeEventListener("keydown", saveEdit);
 
-      dispatch({ type: "EDIT_TODO", payload: { ...task, text: editedTask } });
+      const newText = textInput.value.trim();
+      const newUrgency = parseInt(urgencyInput.value, 10);
+      const newImportance = parseInt(importanceInput.value, 10);
+
+      if (!newText) {
+        textInput.focus();
+        return;
+      }
+
+      dispatch({
+        type: "EDIT_TODO",
+        payload: {
+          ...task,
+          text: newText,
+          urgency: newUrgency,
+          importance: newImportance,
+        },
+      });
 
       const { error } = await supabase
         .from("todo")
-        .update({ text: editedTask })
+        .update({
+          text: newText,
+          urgency: newUrgency,
+          importance: newImportance,
+        })
         .eq("id", task.id);
 
       if (error) {
-        console.error("Editing task error: ", error);
+        console.error("Editing task error:", error);
       }
 
       textInput.value = "";
-    }
-
-    textInput.onkeydown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") saveTask();
+      urgencyInput.value = "3";
+      importanceInput.value = "3";
     };
+
+    textInput.addEventListener("keydown", saveEdit);
   }
 
   return (
@@ -112,7 +145,7 @@ export default function Home() {
         Todo List
       </h1>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col items-center gap-3">
         <input
           type="text"
           id="taskInput"
@@ -122,11 +155,11 @@ export default function Home() {
         <label htmlFor="urgency">Task Urgency</label>
         <input
           type="range"
-          name=""
+          name="urgency"
           value={urgency}
           min={1}
           max={5}
-          id="urgency "
+          id="urgency"
           onChange={(e) => setUrgency(parseInt(e.target.value))}
         />
 
@@ -136,7 +169,7 @@ export default function Home() {
           min={1}
           max={5}
           value={importance}
-          name=""
+          name="importance"
           id="importance"
           onChange={(e) => setImportance(parseInt(e.target.value))}
         />

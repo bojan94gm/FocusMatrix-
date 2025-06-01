@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useToDoContext, type Todo } from "~/toDoContext";
 
 export default function Matrix() {
   const { todo } = useToDoContext();
+  const [showGuide, setShowGuide] = useState(false);
   const byQuadrant: Record<number, Todo[]> = { 1: [], 2: [], 3: [], 4: [] };
 
   const notCompletedTasks = todo.filter((t) => t.completed === false);
@@ -14,13 +16,23 @@ export default function Matrix() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      {/* Matrix Explanation */}
-      <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-          Eisenhower Matrix Guide
-        </h2>
+    <div className="bg-white rounded-xl shadow-md p-6 space-y-4">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+        Eisenhower Matrix Guide
+      </h2>
+
+      <div className="flex justify-center">
+        <button
+          onClick={() => setShowGuide((prev) => !prev)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          {showGuide ? "Hide Guide" : "Show Guide"}
+        </button>
+      </div>
+
+      {showGuide && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Q1 */}
           <div className="p-4 border-l-4 border-red-500 bg-red-50 rounded-r-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white">
@@ -38,6 +50,7 @@ export default function Matrix() {
             </p>
           </div>
 
+          {/* Q2 */}
           <div className="p-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
@@ -55,6 +68,7 @@ export default function Matrix() {
             </p>
           </div>
 
+          {/* Q3 */}
           <div className="p-4 border-l-4 border-yellow-500 bg-yellow-50 rounded-r-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white">
@@ -72,6 +86,7 @@ export default function Matrix() {
             </p>
           </div>
 
+          {/* Q4 */}
           <div className="p-4 border-l-4 border-gray-500 bg-gray-50 rounded-r-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white">
@@ -89,7 +104,7 @@ export default function Matrix() {
             </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Matrix Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

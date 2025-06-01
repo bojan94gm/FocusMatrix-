@@ -41,7 +41,12 @@ function reducerFunction(todo: State, action: Action) {
     case "EDIT_TODO":
       return todo.map((task) =>
         task.id === action.payload.id
-          ? { ...task, text: action.payload.text }
+          ? {
+              ...task,
+              text: action.payload.text,
+              urgency: action.payload.urgency,
+              importance: action.payload.importance,
+            }
           : task
       );
     default:
@@ -58,7 +63,7 @@ export function ToDoProvider({ children }: { children: React.ReactNode }) {
     async function fetchData() {
       const { error, data } = await supabase
         .from("todo")
-        .select("id,text,completed,urgency,importance")
+        .select("id,text,completed,urgency,importance,quadrant")
         .order("created_at", { ascending: true });
 
       if (error) {
