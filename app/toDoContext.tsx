@@ -17,9 +17,10 @@ type Action =
   | { type: "ADD_TODO"; payload: Todo }
   | { type: "TOGGLE_TODO"; payload: number }
   | { type: "DELETE_TODO"; payload: number }
-  | { type: "EDIT_TODO"; payload: Todo };
+  | { type: "EDIT_TODO"; payload: Todo }
+  | { type: "UPDATE_ID"; payload: { tempId: number; realTask: Todo } };
 
-type ContextType = {
+export type ContextType = {
   todo: State;
   dispatch: React.Dispatch<Action>;
 };
@@ -47,6 +48,12 @@ function reducerFunction(todo: State, action: Action) {
               urgency: action.payload.urgency,
               importance: action.payload.importance,
             }
+          : task
+      );
+    case "UPDATE_ID":
+      return todo.map((task) =>
+        task.id === action.payload.tempId
+          ? { ...action.payload.realTask }
           : task
       );
     default:

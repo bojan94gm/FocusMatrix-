@@ -1,31 +1,67 @@
 export default function About() {
   return (
     <div className="max-w-4xl mx-auto p-6 mt-10">
-      <h1 className="text-4xl font-semibold text-center text-gray-800 mb-6">
-        About This To-Do App
-      </h1>
-      <p className="text-lg text-gray-600 leading-relaxed mb-4">
-        Welcome to our To-Do application! This app is designed to help you
-        manage your tasks and stay organized with ease. Whether it's personal or
-        professional, you can use this simple and intuitive tool to track what
-        needs to be done and stay on top of your goals.
-      </p>
-      <p className="text-lg text-gray-600 leading-relaxed mb-4">
-        Features include:
-      </p>
-      <ul className="list-disc pl-5 text-lg text-gray-600 mb-6">
-        <li>Create, edit, and delete tasks.</li>
-        <li>Mark tasks as completed.</li>
-        <li>Organize your tasks and stay on top of deadlines.</li>
-        <li>Simple and user-friendly interface.</li>
-      </ul>
-      <p className="text-lg text-gray-600 leading-relaxed mb-4">
-        We hope this app helps you stay productive and focused on what matters
-        most. Thank you for using our app!
-      </p>
-      <p className="text-lg text-gray-600 leading-relaxed">
-        If you have any questions or feedback, feel free to reach out to us.
-      </p>
+      <section className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">About</h1>
+
+        <p className="text-gray-700 mb-4">
+          <strong>
+            Welcome to FocusMatrix – Your Smart Task Prioritization Tool
+          </strong>
+        </p>
+
+        <p className="text-gray-700 mb-4">
+          FocusMatrix is a productivity app designed to help you manage your
+          time and tasks more effectively by applying the
+          <strong>Eisenhower Matrix</strong> – a proven method for
+          decision-making and task prioritization.
+        </p>
+
+        <p className="text-gray-700 mb-4">
+          Unlike traditional to-do lists, FocusMatrix doesn’t just store your
+          tasks – it
+          <strong> analyzes their urgency and importance</strong> to place them
+          in one of four quadrants:
+        </p>
+
+        <ul className="list-disc list-inside text-gray-700 mb-4">
+          <li>
+            <strong>Quadrant 1</strong>: Urgent and Important – Do it now
+          </li>
+          <li>
+            <strong>Quadrant 2</strong>: Not Urgent but Important – Schedule it
+          </li>
+          <li>
+            <strong>Quadrant 3</strong>: Urgent but Not Important – Delegate it
+          </li>
+          <li>
+            <strong>Quadrant 4</strong>: Not Urgent and Not Important –
+            Eliminate it
+          </li>
+        </ul>
+
+        <p className="text-gray-700 mb-4">
+          With an intuitive interface and simple controls, you can quickly:
+        </p>
+
+        <ul className="list-disc list-inside text-gray-700 mb-4">
+          <li>Add new tasks with urgency and importance levels</li>
+          <li>Automatically assign tasks to the right quadrant</li>
+          <li>Mark tasks as completed</li>
+          <li>Edit or delete tasks at any time</li>
+        </ul>
+
+        <p className="text-gray-700 mb-4">
+          Whether you're a student, professional, or just looking to stay more
+          organized, FocusMatrix helps you focus on
+          <strong> what truly matters</strong> – and stop wasting time on what
+          doesn't.
+        </p>
+
+        <p className="text-gray-700">
+          Start taking control of your day, one decision at a time.
+        </p>
+      </section>
     </div>
   );
 }

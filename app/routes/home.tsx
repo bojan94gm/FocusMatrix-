@@ -2,17 +2,67 @@ import { supabase } from "~/supabase-client";
 import type { Route } from "./+types/home";
 import { useToDoContext } from "~/toDoContext";
 import { type Todo } from "~/toDoContext";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "ToDo App" },
+    { title: "Eisenhower Matrix" },
     {
-      name: "ToDo application",
-      content: "Welcome to the best and to the most simple todo app!",
+      name: "focusMatrix",
+      content:
+        "Welcome to the best and to the most simple tasks prioritization!",
     },
   ];
 }
+
+type TaskItemProps = {
+  task: Todo;
+  toggleTodo: (task: Todo) => void;
+  editTask: (task: Todo) => void;
+  deleteTask: (id: number) => void;
+};
+
+const TaskItem = memo(function TaskItem({
+  task,
+  toggleTodo,
+  editTask,
+  deleteTask,
+}: TaskItemProps) {
+  return (
+    <li className="flex items-center justify-between bg-gray-50 p-3 rounded-lg shadow-sm">
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={task.completed}
+          onChange={() => toggleTodo(task)}
+          className="w-5 h-5 accent-blue-600"
+        />
+        <span
+          className={`${
+            task.completed ? "line-through text-gray-400" : "text-gray-800"
+          }`}
+        >
+          {task.text}
+        </span>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => editTask(task)}
+          className="px-3 py-1 text-sm bg-yellow-400 text-white rounded hover:bg-yellow-500 transition"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => deleteTask(task.id)}
+          className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
+        >
+          Delete
+        </button>
+      </div>
+    </li>
+  );
+});
 
 export default function Home() {
   const { todo, dispatch } = useToDoContext();
@@ -21,6 +71,12 @@ export default function Home() {
 
   async function addTask() {
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
+    const text = textInput.value.trim();
+
+    if (textInput.value === "") {
+      alert("Add task text");
+      return;
+    }
 
     const determineQuadrant = (): number => {
       if (urgency >= 4 && importance >= 4) return 1;
@@ -30,119 +86,148 @@ export default function Home() {
     };
 
     const quadrant = determineQuadrant();
+    const tempId = Date.now();
 
-    if (textInput.value === "") {
-      alert("Add task text");
-      return;
-    }
+    const optimisticTask: Todo = {
+      id: tempId,
+      text: text,
+      completed: false,
+      urgency: urgency,
+      importance: importance,
+      quadrant: quadrant,
+    };
 
-    const { error, data } = await supabase
-      .from("todo")
-      .insert({
-        text: textInput.value,
-        completed: false,
-        urgency: urgency,
-        importance: importance,
-        quadrant: quadrant,
-      })
-      .select()
-      .single();
+    dispatch({ type: "ADD_TODO", payload: optimisticTask });
 
-    if (error) {
-      console.error("Insert task error: ", error);
-      return;
-    } else {
+    try {
+      const { error, data } = await supabase
+        .from("todo")
+        .insert({
+          text: textInput.value,
+          completed: false,
+          urgency: urgency,
+          importance: importance,
+          quadrant: quadrant,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
       dispatch({
-        type: "ADD_TODO",
-        payload: data,
+        type: "UPDATE_ID",
+        payload: { tempId: tempId, realTask: data },
       });
+    } catch (error) {
+      alert("Adding task failed");
+      console.error("Insert task error: ", error);
+
+      dispatch({
+        type: "DELETE_TODO",
+        payload: tempId,
+      });
+
+      alert("Adding task failed. Please try again.");
     }
     textInput.value = "";
   }
 
-  async function deleteTask(id: number) {
-    dispatch({ type: "DELETE_TODO", payload: id });
-    const { error } = await supabase.from("todo").delete().eq("id", id);
+  const deleteTask = useCallback(
+    async (id: number) => {
+      dispatch({ type: "DELETE_TODO", payload: id });
+      const { error } = await supabase.from("todo").delete().eq("id", id);
 
-    if (error) {
-      console.error("Deleting task error: ", error);
-    }
-  }
-
-  async function toggleTodo(task: Todo) {
-    dispatch({ type: "TOGGLE_TODO", payload: task.id });
-
-    const { error } = await supabase
-      .from("todo")
-      .update({ completed: !task.completed })
-      .eq("id", task.id);
-
-    if (error) {
-      console.error("Toggling task error: ", error);
-    }
-  }
-
-  function editTask(task: Todo) {
-    const textInput = document.getElementById("taskInput") as HTMLInputElement;
-    const urgencyInput = document.getElementById("urgency") as HTMLInputElement;
-    const importanceInput = document.getElementById(
-      "importance"
-    ) as HTMLInputElement;
-
-    textInput.value = task.text;
-    urgencyInput.value = String(task.urgency);
-    importanceInput.value = String(task.importance);
-
-    textInput.focus();
-
-    const saveEdit = async (e: KeyboardEvent) => {
-      if (e.key !== "Enter") return;
-      textInput.removeEventListener("keydown", saveEdit);
-
-      const newText = textInput.value.trim();
-      const newUrgency = parseInt(urgencyInput.value, 10);
-      const newImportance = parseInt(importanceInput.value, 10);
-
-      if (!newText) {
-        textInput.focus();
-        return;
+      if (error) {
+        console.error("Deleting task error: ", error);
       }
+    },
+    [dispatch]
+  );
 
-      dispatch({
-        type: "EDIT_TODO",
-        payload: {
-          ...task,
-          text: newText,
-          urgency: newUrgency,
-          importance: newImportance,
-        },
-      });
+  const toggleTodo = useCallback(
+    async (task: Todo) => {
+      dispatch({ type: "TOGGLE_TODO", payload: task.id });
 
       const { error } = await supabase
         .from("todo")
-        .update({
-          text: newText,
-          urgency: newUrgency,
-          importance: newImportance,
-        })
+        .update({ completed: !task.completed })
         .eq("id", task.id);
 
       if (error) {
-        console.error("Editing task error:", error);
+        console.error("Toggling task error: ", error);
       }
+    },
+    [dispatch]
+  );
 
-      textInput.value = "";
-      urgencyInput.value = "3";
-      importanceInput.value = "3";
-    };
+  const editTask = useCallback(
+    async (task: Todo) => {
+      const textInput = document.getElementById(
+        "taskInput"
+      ) as HTMLInputElement;
+      const urgencyInput = document.getElementById(
+        "urgency"
+      ) as HTMLInputElement;
+      const importanceInput = document.getElementById(
+        "importance"
+      ) as HTMLInputElement;
 
-    textInput.addEventListener("keydown", saveEdit);
-  }
+      textInput.value = task.text;
+      urgencyInput.value = String(task.urgency);
+      importanceInput.value = String(task.importance);
+
+      textInput.focus();
+
+      const saveEdit = async (e: KeyboardEvent) => {
+        if (e.key !== "Enter") return;
+        textInput.removeEventListener("keydown", saveEdit);
+
+        const newText = textInput.value.trim();
+        const newUrgency = parseInt(urgencyInput.value, 10);
+        const newImportance = parseInt(importanceInput.value, 10);
+
+        if (!newText) {
+          textInput.focus();
+          return;
+        }
+
+        dispatch({
+          type: "EDIT_TODO",
+          payload: {
+            ...task,
+            text: newText,
+            urgency: newUrgency,
+            importance: newImportance,
+          },
+        });
+
+        const { error } = await supabase
+          .from("todo")
+          .update({
+            text: newText,
+            urgency: newUrgency,
+            importance: newImportance,
+          })
+          .eq("id", task.id);
+
+        if (error) {
+          console.error("Editing task error:", error);
+        }
+
+        textInput.value = "";
+        urgencyInput.value = "3";
+        importanceInput.value = "3";
+      };
+
+      textInput.addEventListener("keydown", saveEdit);
+    },
+    [dispatch]
+  );
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-xl mt-10 space-y-6">
       <h1 className="text-2xl font-bold text-center text-gray-800">
-        Todo List
+        Create task
       </h1>
 
       <div className="flex flex-col items-center gap-3">
@@ -189,43 +274,13 @@ export default function Home() {
           task.completed ? (
             ""
           ) : (
-            <li
+            <TaskItem
               key={task.id}
-              className="flex items-center justify-between bg-gray-50 p-3 rounded-lg shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleTodo(task)}
-                  className="w-5 h-5 accent-blue-600"
-                />
-                <span
-                  className={`${
-                    task.completed
-                      ? "line-through text-gray-400"
-                      : "text-gray-800"
-                  }`}
-                >
-                  {task.text}
-                </span>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => editTask(task)}
-                  className="px-3 py-1 text-sm bg-yellow-400 text-white rounded hover:bg-yellow-500 transition"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
+              task={task}
+              deleteTask={deleteTask}
+              editTask={editTask}
+              toggleTodo={toggleTodo}
+            />
           )
         )}
       </ul>

@@ -22,7 +22,7 @@ export default function Navbar() {
           to="/"
           className="text-2xl font-bold tracking-wide hover:text-blue-200"
         >
-          TODOApp
+          focusMatrix
         </NavLink>
 
         <nav className="mt-4 sm:mt-0 flex gap-4 text-sm font-medium">
