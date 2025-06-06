@@ -3,6 +3,7 @@ import type { Route } from "./+types/home";
 import { useToDoContext } from "~/toDoContext";
 import { type Todo } from "~/toDoContext";
 import { memo, useCallback, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -80,12 +81,14 @@ export default function Home() {
   const [urgency, setUrgency] = useState(3);
   const [importance, setImportance] = useState(3);
   const [deadline, setDeadline] = useState("");
+  const [routine, setRoutine] = useState(false);
 
   async function addTask() {
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
     const deadlineInput = document.getElementById(
       "deadline"
     ) as HTMLInputElement;
+    const routineInput = document.getElementById("routine") as HTMLInputElement;
     const text = textInput.value.trim();
 
     if (textInput.value === "") {
@@ -125,6 +128,7 @@ export default function Home() {
       urgency: urgency,
       importance: importance,
       deadline: deadline,
+      routine: routine,
       quadrant: quadrant,
     };
 
@@ -140,6 +144,7 @@ export default function Home() {
           importance: importance,
           quadrant: quadrant,
           deadline: deadline,
+          routine: routine,
         })
         .select()
         .single();
@@ -161,8 +166,14 @@ export default function Home() {
 
       alert("Adding task failed. Please try again.");
     }
+
+    if (routine) {
+      toast.success("Task added to Routines");
+    }
+
     textInput.value = "";
     deadlineInput.value = "";
+    routineInput.checked = false;
   }
 
   const deleteTask = useCallback(
@@ -188,6 +199,22 @@ export default function Home() {
 
       if (error) {
         console.error("Toggling task error: ", error);
+      }
+    },
+    [dispatch]
+  );
+
+  const toggleRoutine = useCallback(
+    async (task: Todo) => {
+      dispatch({ type: "ADD_ROUTINE", payload: task });
+
+      const { error } = await supabase
+        .from("todo")
+        .update({ routine: !task.routine })
+        .eq("id", task.id);
+
+      if (error) {
+        console.error("Routine task status change error: ", error);
       }
     },
     [dispatch]
@@ -352,6 +379,29 @@ export default function Home() {
             />
           </div>
 
+          <div className="flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                type="checkbox"
+                name="routine"
+                id="routine"
+                onChange={(e) => setRoutine(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label
+                htmlFor="routine"
+                className="font-medium text-gray-700 flex items-center"
+              >
+                Routine Task
+              </label>
+              <p className="text-gray-500 mt-1">
+                Enable to automatically repeat this task daily
+              </p>
+            </div>
+          </div>
+
           <button
             onClick={addTask}
             className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition transform hover:-translate-y-0.5 active:translate-y-0 shadow-md"
@@ -364,15 +414,17 @@ export default function Home() {
       {/* Task List Section */}
       <div>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-700">Pending Tasks</h2>
+          <h2 className="text-lg font-semibold text-gray-700">
+            One-time Tasks
+          </h2>
           <span className="text-sm bg-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
-            {todo.filter((t) => !t.completed).length} items
+            To do: {todo.filter((t) => !t.completed).length}
           </span>
         </div>
 
         <ul className="space-y-3">
           {todo.map((task) =>
-            task.completed ? null : (
+            task.completed || task.routine ? null : (
               <TaskItem
                 key={task.id}
                 task={task}

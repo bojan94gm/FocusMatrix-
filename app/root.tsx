@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabase-client";
 import type { Session } from "@supabase/supabase-js";
 import type { Route } from "./routes/+types/home";
+import { Toaster } from "react-hot-toast";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -85,6 +86,7 @@ export default function App() {
         <>
           <ToDoProvider>
             <Navbar></Navbar>
+            <Toaster position="bottom-center" reverseOrder={false} />
             <Outlet></Outlet>
           </ToDoProvider>
         </>

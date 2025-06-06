@@ -5,4 +5,5 @@ export default [
   route("about", "routes/about.tsx"),
   route("completed", "routes/completed.tsx"),
   route("matrix", "routes/matrix.tsx"),
+  route("routines", "routes/routines.tsx"),
 ] satisfies RouteConfig;

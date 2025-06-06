@@ -8,6 +8,7 @@ export type Todo = {
   urgency: number;
   importance: number;
   deadline?: string;
+  routine: boolean;
   quadrant: number;
 };
 
@@ -16,10 +17,12 @@ type State = Todo[];
 type Action =
   | { type: "SET_TODO"; payload: Todo[] }
   | { type: "ADD_TODO"; payload: Todo }
+  | { type: "ADD_ROUTINE"; payload: Todo }
   | { type: "TOGGLE_TODO"; payload: number }
   | { type: "DELETE_TODO"; payload: number }
   | { type: "EDIT_TODO"; payload: Todo }
-  | { type: "UPDATE_ID"; payload: { tempId: number; realTask: Todo } };
+  | { type: "UPDATE_ID"; payload: { tempId: number; realTask: Todo } }
+  | { type: "UNCHECK_ALL_ROUTINES" };
 
 export type ContextType = {
   todo: State;
@@ -40,6 +43,12 @@ function reducerFunction(todo: State, action: Action) {
           ? { ...task, completed: !task.completed }
           : task
       );
+    case "ADD_ROUTINE":
+      return todo.map((task) =>
+        task.id === action.payload.id
+          ? { ...task, routine: !task.routine }
+          : task
+      );
     case "EDIT_TODO":
       return todo.map((task) =>
         task.id === action.payload.id
@@ -57,6 +66,7 @@ function reducerFunction(todo: State, action: Action) {
           ? { ...action.payload.realTask }
           : task
       );
+
     default:
       return todo;
   }
@@ -71,7 +81,9 @@ export function ToDoProvider({ children }: { children: React.ReactNode }) {
     async function fetchData() {
       const { error, data } = await supabase
         .from("todo")
-        .select("id,text,completed,urgency,importance,quadrant,deadline")
+        .select(
+          "id,text,completed,urgency,importance,quadrant,deadline,routine"
+        )
         .order("created_at", { ascending: true });
 
       if (error) {
