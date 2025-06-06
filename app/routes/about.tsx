@@ -13,7 +13,7 @@ export default function About() {
         <p className="text-gray-700 mb-4">
           FocusMatrix is a productivity app designed to help you manage your
           time and tasks more effectively by applying the
-          <strong>Eisenhower Matrix</strong> – a proven method for
+          <strong> Eisenhower Matrix</strong> – a proven method for
           decision-making and task prioritization.
         </p>
 
@@ -45,7 +45,7 @@ export default function About() {
         </p>
 
         <ul className="list-disc list-inside text-gray-700 mb-4">
-          <li>Add new tasks with urgency and importance levels</li>
+          <li>Add new tasks with deadline, urgency and importance levels</li>
           <li>Automatically assign tasks to the right quadrant</li>
           <li>Mark tasks as completed</li>
           <li>Edit or delete tasks at any time</li>

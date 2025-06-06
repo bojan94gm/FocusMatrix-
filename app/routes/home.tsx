@@ -31,19 +31,23 @@ const TaskItem = memo(function TaskItem({
   return (
     <li className="flex items-center justify-between bg-gray-50 p-3 rounded-lg shadow-sm">
       <div className="flex items-center gap-3">
+        <div
+          className={`w-3 h-3 rounded-full ${
+            task.quadrant === 1
+              ? "bg-red-500 animate-[pulse_0.5s_infinite]"
+              : task.quadrant === 3
+              ? "bg-yellow-500 animate-[pulse_1s_infinite]"
+              : ""
+          }`}
+        ></div>
+
         <input
           type="checkbox"
           checked={task.completed}
           onChange={() => toggleTodo(task)}
           className="w-5 h-5 accent-blue-600"
         />
-        <span
-          className={`${
-            task.completed ? "line-through text-gray-400" : "text-gray-800"
-          }`}
-        >
-          {task.text}
-        </span>
+        <span className={"text-gray-800"}>{task.text}</span>
       </div>
 
       <div className="flex gap-2">
@@ -64,13 +68,24 @@ const TaskItem = memo(function TaskItem({
   );
 });
 
+function calculateDaysLeft(deadline: string) {
+  const today = new Date();
+  const deadlineDate = new Date(deadline);
+  const timeDifference = deadlineDate.getTime() - today.getTime();
+  return Math.ceil(timeDifference / (1000 * 3600 * 24));
+}
+
 export default function Home() {
   const { todo, dispatch } = useToDoContext();
   const [urgency, setUrgency] = useState(3);
   const [importance, setImportance] = useState(3);
+  const [deadline, setDeadline] = useState("");
 
   async function addTask() {
     const textInput = document.getElementById("taskInput") as HTMLInputElement;
+    const deadlineInput = document.getElementById(
+      "deadline"
+    ) as HTMLInputElement;
     const text = textInput.value.trim();
 
     if (textInput.value === "") {
@@ -78,14 +93,29 @@ export default function Home() {
       return;
     }
 
-    const determineQuadrant = (): number => {
-      if (urgency >= 4 && importance >= 4) return 1;
-      if (importance >= 4 && urgency < 4) return 2;
-      if (urgency >= 4 && importance < 4) return 3;
+    const determineQuadrant = (
+      deadline: string,
+      importance: number,
+      manualUrgency: number
+    ): number => {
+      let finalUrgency = manualUrgency;
+
+      if (deadline) {
+        const daysLeft = calculateDaysLeft(deadline);
+
+        if (daysLeft <= 1) finalUrgency = 5;
+        else if (daysLeft <= 3) finalUrgency = Math.max(manualUrgency, 4);
+        else if (daysLeft <= 7) finalUrgency = Math.max(manualUrgency, 3);
+        else if (daysLeft <= 14) finalUrgency = Math.max(manualUrgency, 2);
+      }
+
+      if (finalUrgency >= 4 && importance >= 4) return 1;
+      if (importance >= 4 && finalUrgency < 4) return 2;
+      if (finalUrgency >= 4 && importance < 4) return 3;
       return 4;
     };
 
-    const quadrant = determineQuadrant();
+    const quadrant = determineQuadrant(deadline, importance, urgency);
     const tempId = Date.now();
 
     const optimisticTask: Todo = {
@@ -94,6 +124,7 @@ export default function Home() {
       completed: false,
       urgency: urgency,
       importance: importance,
+      deadline: deadline,
       quadrant: quadrant,
     };
 
@@ -108,6 +139,7 @@ export default function Home() {
           urgency: urgency,
           importance: importance,
           quadrant: quadrant,
+          deadline: deadline,
         })
         .select()
         .single();
@@ -130,6 +162,7 @@ export default function Home() {
       alert("Adding task failed. Please try again.");
     }
     textInput.value = "";
+    deadlineInput.value = "";
   }
 
   const deleteTask = useCallback(
@@ -225,65 +258,132 @@ export default function Home() {
   );
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-xl mt-10 space-y-6">
-      <h1 className="text-2xl font-bold text-center text-gray-800">
-        Create task
+    <div className="max-w-xl mx-auto p-6 bg-white shadow-lg rounded-xl mt-10 space-y-8">
+      <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
+        Create New Task
       </h1>
 
-      <div className="flex flex-col items-center gap-3">
-        <input
-          type="text"
-          id="taskInput"
-          placeholder="Write task..."
-          className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <label htmlFor="urgency">Task Urgency</label>
-        <input
-          type="range"
-          name="urgency"
-          value={urgency}
-          min={1}
-          max={5}
-          id="urgency"
-          onChange={(e) => setUrgency(parseInt(e.target.value))}
-        />
+      {/* Form Section */}
+      <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          Task Details
+        </h2>
 
-        <label htmlFor="importance">Task Importance</label>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          value={importance}
-          name="importance"
-          id="importance"
-          onChange={(e) => setImportance(parseInt(e.target.value))}
-        />
+        <div className="space-y-5">
+          <div>
+            <label
+              htmlFor="taskInput"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Task Description
+            </label>
+            <input
+              type="text"
+              id="taskInput"
+              placeholder="What needs to be done?"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
 
-        <button
-          onClick={addTask}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          Add task
-        </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label
+                  htmlFor="urgency"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Urgency:
+                </label>
+                <span className="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                  {urgency}/5
+                </span>
+              </div>
+              <input
+                type="range"
+                name="urgency"
+                value={urgency}
+                min={1}
+                max={5}
+                id="urgency"
+                onChange={(e) => setUrgency(parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label
+                  htmlFor="importance"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Importance:
+                </label>
+                <span className="text-sm font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                  {importance}/5
+                </span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                value={importance}
+                name="importance"
+                id="importance"
+                onChange={(e) => setImportance(parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="deadline"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Deadline
+            </label>
+            <input
+              type="date"
+              name="deadline"
+              id="deadline"
+              min={new Date().toISOString().split("T")[0]}
+              onChange={(e) => setDeadline(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <button
+            onClick={addTask}
+            className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition transform hover:-translate-y-0.5 active:translate-y-0 shadow-md"
+          >
+            Add Task
+          </button>
+        </div>
       </div>
 
-      <hr className="border-t border-gray-200" />
+      {/* Task List Section */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-700">Pending Tasks</h2>
+          <span className="text-sm bg-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
+            {todo.filter((t) => !t.completed).length} items
+          </span>
+        </div>
 
-      <ul className="space-y-3">
-        {todo.map((task) =>
-          task.completed ? (
-            ""
-          ) : (
-            <TaskItem
-              key={task.id}
-              task={task}
-              deleteTask={deleteTask}
-              editTask={editTask}
-              toggleTodo={toggleTodo}
-            />
-          )
-        )}
-      </ul>
+        <ul className="space-y-3">
+          {todo.map((task) =>
+            task.completed ? null : (
+              <TaskItem
+                key={task.id}
+                task={task}
+                deleteTask={deleteTask}
+                editTask={editTask}
+                toggleTodo={toggleTodo}
+              />
+            )
+          )}
+        </ul>
+      </div>
     </div>
   );
 }
