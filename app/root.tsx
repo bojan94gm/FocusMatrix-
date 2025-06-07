@@ -86,8 +86,10 @@ export default function App() {
         <>
           <ToDoProvider>
             <Navbar></Navbar>
-            <Toaster position="bottom-center" reverseOrder={false} />
-            <Outlet></Outlet>
+            <div className="pt-20">
+              <Toaster position="bottom-center" reverseOrder={false} />
+              <Outlet></Outlet>
+            </div>
           </ToDoProvider>
         </>
       )}

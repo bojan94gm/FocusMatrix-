@@ -22,7 +22,7 @@ type Action =
   | { type: "DELETE_TODO"; payload: number }
   | { type: "EDIT_TODO"; payload: Todo }
   | { type: "UPDATE_ID"; payload: { tempId: number; realTask: Todo } }
-  | { type: "UNCHECK_ALL_ROUTINES" };
+  | { type: "UNCKECK_ROUTINES"; payload: Todo[] };
 
 export type ContextType = {
   todo: State;
@@ -65,6 +65,10 @@ function reducerFunction(todo: State, action: Action) {
         task.id === action.payload.tempId
           ? { ...action.payload.realTask }
           : task
+      );
+    case "UNCKECK_ROUTINES":
+      return todo.map((task) =>
+        task.routine === true ? { ...task, completed: false } : task
       );
 
     default:

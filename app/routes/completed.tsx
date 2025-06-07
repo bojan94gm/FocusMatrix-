@@ -11,7 +11,7 @@ export default function Completed() {
   const { todo, dispatch } = useToDoContext();
 
   const completedTasks = useMemo(() => {
-    return todo.filter((task) => task.completed);
+    return todo.filter((task) => task.completed && task.routine === false);
   }, [todo]);
 
   const CompletedTaskItem = memo(

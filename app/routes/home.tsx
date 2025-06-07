@@ -418,11 +418,12 @@ export default function Home() {
             One-time Tasks
           </h2>
           <span className="text-sm bg-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
-            To do: {todo.filter((t) => !t.completed).length}
+            To do:
+            {todo.filter((t) => !t.completed && t.routine === false).length}
           </span>
         </div>
 
-        <ul className="space-y-3">
+        <ul className="space-y-3 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400">
           {todo.map((task) =>
             task.completed || task.routine ? null : (
               <TaskItem

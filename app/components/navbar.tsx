@@ -14,7 +14,7 @@ export default function Navbar() {
   }
 
   return (
-    <div className="bg-blue-600 text-white shadow-md">
+    <div className="fixed top-0 left-0 w-full z-50 bg-blue-600 text-white shadow-md">
       <div className="max-w-4xl mx-auto px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <NavLink
           to="/"

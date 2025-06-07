@@ -10,6 +10,20 @@ type RoutineTaskItemProps = {
 export default function Routines() {
   const { todo, dispatch } = useToDoContext();
 
+  const handleUnckeckTasks = useCallback(async () => {
+    dispatch({ type: "UNCKECK_ROUTINES", payload: todo });
+    console.log("Pozvana");
+
+    const { error } = await supabase
+      .from("todo")
+      .update({ completed: false })
+      .eq("routine", true);
+
+    if (error) {
+      console.error("Unchecking routine tasks error: ", error);
+    }
+  }, [todo]);
+
   const routineTasks = useMemo(() => {
     return todo.filter((task) => task.routine);
   }, [todo]);
@@ -81,7 +95,10 @@ export default function Routines() {
           <RoutineTaskItem key={task.id} task={task} dispatch={dispatch} />
         ))}
       </ul>
-      <button className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
+      <button
+        onClick={handleUnckeckTasks}
+        className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+      >
         Uncheck All
       </button>
     </div>
