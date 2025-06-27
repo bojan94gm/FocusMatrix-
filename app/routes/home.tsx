@@ -31,27 +31,38 @@ const TaskItem = memo(function TaskItem({
 }: TaskItemProps) {
   return (
     <li className="flex items-center justify-between bg-gray-50 p-3 rounded-lg shadow-sm">
-      <div className="flex items-center gap-3">
-        <div
-          className={`w-3 h-3 rounded-full ${
-            task.quadrant === 1
-              ? "bg-red-500 animate-[pulse_0.5s_infinite]"
-              : task.quadrant === 3
-              ? "bg-yellow-500 animate-[pulse_1s_infinite]"
-              : ""
-          }`}
-        ></div>
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        {/* indikator i „Past due“ */}
+        <div className="flex items-center gap-1">
+          <div
+            className={`w-3 h-3 rounded-full ${
+              task.quadrant === 1
+                ? "bg-red-500 animate-[pulse_0.5s_infinite]"
+                : task.quadrant === 3
+                ? "bg-yellow-500 animate-[pulse_1s_infinite]"
+                : task.quadrant === 0
+                ? "bg-black animate-[pulse_1s_infinite]"
+                : ""
+            }`}
+          ></div>
+          {task.quadrant === 0 && (
+            <span className="text-xs font-semibold text-red-700 animate-pulse">
+              Past due
+            </span>
+          )}
+        </div>
 
         <input
           type="checkbox"
           checked={task.completed}
           onChange={() => toggleTodo(task)}
-          className="w-5 h-5 accent-blue-600"
+          className="w-5 h-5 accent-blue-600 flex-shrink-0"
         />
-        <span className={"text-gray-800"}>{task.text}</span>
+
+        <span className="text-gray-800 truncate ml-2">{task.text}</span>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 ml-4 flex-shrink-0">
         <button
           onClick={() => editTask(task)}
           className="px-3 py-1 text-sm bg-yellow-400 text-white rounded hover:bg-yellow-500 transition"
@@ -103,10 +114,11 @@ export default function Home() {
     ): number => {
       let finalUrgency = manualUrgency;
 
-      if (deadline) {
+      if (deadline && manualUrgency >= 4) {
         const daysLeft = calculateDaysLeft(deadline);
 
-        if (daysLeft <= 1) finalUrgency = 5;
+        if (daysLeft < 0) return 0;
+        else if (daysLeft <= 1) finalUrgency = 5;
         else if (daysLeft <= 3) finalUrgency = Math.max(manualUrgency, 4);
         else if (daysLeft <= 7) finalUrgency = Math.max(manualUrgency, 3);
         else if (daysLeft <= 14) finalUrgency = Math.max(manualUrgency, 2);
@@ -174,6 +186,9 @@ export default function Home() {
     textInput.value = "";
     deadlineInput.value = "";
     routineInput.checked = false;
+    setImportance(3);
+    setUrgency(3);
+    setDeadline("");
   }
 
   const deleteTask = useCallback(
@@ -199,22 +214,6 @@ export default function Home() {
 
       if (error) {
         console.error("Toggling task error: ", error);
-      }
-    },
-    [dispatch]
-  );
-
-  const toggleRoutine = useCallback(
-    async (task: Todo) => {
-      dispatch({ type: "ADD_ROUTINE", payload: task });
-
-      const { error } = await supabase
-        .from("todo")
-        .update({ routine: !task.routine })
-        .eq("id", task.id);
-
-      if (error) {
-        console.error("Routine task status change error: ", error);
       }
     },
     [dispatch]
